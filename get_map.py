@@ -23,15 +23,15 @@ class ResponseContent(BaseException):
 
 class Map(object):
 
-    def __init__(self, coordinates, spn):
+    def __init__(self, coordinates, z):
         self.coordinates = coordinates
-        self.spn = spn
+        self.z = z
         self.name = 'main_map.png'
 
     def get_map(self):
         map_params = {
             'll': ','.join(self.coordinates),
-            'spn': ','.join(self.spn),
+            'z': self.z,
             'l': 'map'
         }
         response = requests.get(URL_MAP, map_params)
