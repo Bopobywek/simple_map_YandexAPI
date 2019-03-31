@@ -1,33 +1,34 @@
 import os
 import sys
-import math
+from math import sin, pi, cos
+import time
+import pyproj as proj
 
 import pygame
 
 from get_map import Map
 
-COORDINATES = ['37.620070', '55.753630']
-
 
 class MapWindow(object):
+    SCALE_POSITIONS = ['0.0001', '0.001', '0.005', '0.01', '0.02', '0.03', '0.05', '1', '3', '6']
 
     def __init__(self, width, height):
-        self.z = 10
-        self.w, self.h = width, height
-        self.map = Map(COORDINATES, self.z)
+        self.spn = ['0.01', '0.01']  # Долгота, широта
+        self.coordinates = ['37.620070', '55.753630']  # Долгота (lon), Широта (lat)
+        self.map = Map(self.coordinates, self.spn)  # 1 граница - 4. 2 граница - 6, 3 - 11.
         self.get_map()
+        self.w, self.h = width, height
         pygame.init()
         self.screen = pygame.display.set_mode((width, height))
         pygame.display.flip()
 
-    def get_point(self, x, y):
-        parallel_multiplier = math.cos(float(COORDINATES[0]) * math.pi / 180)
-        degrees_per_pixel_x = 360 / math.pow(2, self.z + 8)
-        degrees_per_pixel_y = 360 / math.pow(2, self.z + 8) * parallel_multiplier
-        point_lat = float(COORDINATES[0]) - degrees_per_pixel_y * (y - self.h / 2)
-        point_lng = float(COORDINATES[1]) + degrees_per_pixel_x * (x - self.w / 2)
+    def update_map(self):
+        self.map = Map(self.coordinates, self.spn)
+        self.get_map()
+        print('ok')
 
-        return point_lat, point_lng
+    def get_point(self, lon, lat):
+        pass
 
     def update(self):
         for event in pygame.event.get():
@@ -36,21 +37,42 @@ class MapWindow(object):
                 sys.exit(0)
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_PAGEUP:
-                    self.z += 1
-                    if self.z <= 17:
-                        self.map = Map(COORDINATES, self.z)
-                        self.get_map()
-                    else:
-                        self.z = 17
+                    self.spn = [self.SCALE_POSITIONS[self.SCALE_POSITIONS.index(self.spn[i]) - 1]
+                                for i in range(2)] if self.SCALE_POSITIONS.index(self.spn[0]) - 1 >= 0 else self.spn
+                    self.update_map()
                 if event.key == pygame.K_PAGEDOWN:
-                    self.z -= 1
-                    if self.z >= 2:
-                        self.map = Map(COORDINATES, self.z)
-                        self.get_map()
-                    else:
-                        self.z = 2
+                    self.spn = [self.SCALE_POSITIONS[self.SCALE_POSITIONS.index(self.spn[i]) + 1]
+                                for i in range(2)] if self.SCALE_POSITIONS.index(self.spn[0]) + 1 < \
+                                                      len(self.SCALE_POSITIONS) else self.spn
+                    self.update_map()
+                if event.key == pygame.K_DOWN:
+                    if float(self.coordinates[1]) - float(self.spn[1]) < -82:
+                        self.coordinates = [self.coordinates[0], str(-82 + float(self.spn[1]))]
+                    self.coordinates = self.coordinates[0], str(float(self.coordinates[1]) - float(self.spn[1]))
+                    print(self.coordinates)
+                    self.update_map()
+                if event.key == pygame.K_UP:
+                    if float(self.coordinates[1]) + float(self.spn[1]) > 85:
+                        self.coordinates = [self.coordinates[0], str(85 - float(self.spn[1]))]
+                    self.coordinates = self.coordinates[0], str(float(self.coordinates[1]) + float(self.spn[1]))
+                    print(self.coordinates)
+                    self.update_map()
+                if event.key == pygame.K_LEFT:
+                    if float(self.coordinates[0]) - float(self.spn[1]) < -172:
+                        self.coordinates = [str(-172 + float(self.spn[1])), self.coordinates[1]]
+                    self.coordinates = str(float(self.coordinates[0]) - float(self.spn[0])), self.coordinates[1]
+                    print(self.coordinates)
+                    self.update_map()
+                if event.key == pygame.K_RIGHT:
+                    if float(self.coordinates[0]) + float(self.spn[1]) > 178:
+                        self.coordinates = [str(178 - float(self.spn[1])), self.coordinates[1]]
+                    self.coordinates = str(float(self.coordinates[0]) + float(self.spn[0])), self.coordinates[1]
+                    print(self.coordinates)
+                    self.update_map()
             if event.type == pygame.MOUSEMOTION:
-                point = self.get_point(event.pos[0], event.pos[1])
+                pass
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pass
 
     def draw(self):
         self.screen.blit(pygame.image.load(os.path.join('map_parts/', self.map.name)), (0, 0))
