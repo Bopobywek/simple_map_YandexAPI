@@ -1,12 +1,10 @@
 import os
 import sys
-from math import sin, pi, cos
-import time
-import pyproj as proj
 
 import pygame
 
 from get_map import Map
+from buttons import LayersButton
 
 
 class MapWindow(object):
@@ -15,7 +13,11 @@ class MapWindow(object):
     def __init__(self, width, height):
         self.spn = ['0.01', '0.01']  # Долгота, широта
         self.coordinates = ['37.620070', '55.753630']  # Долгота (lon), Широта (lat)
-        self.map = Map(self.coordinates, self.spn)  # 1 граница - 4. 2 граница - 6, 3 - 11.
+        self.pts = list()
+        self.type_layer = 'map'
+        self.buttons = pygame.sprite.Group()
+        self.l_btn = LayersButton(self.buttons, self)
+        self.map = Map(self.coordinates, self.spn, self.pts, self.type_layer)
         self.get_map()
         self.w, self.h = width, height
         pygame.init()
@@ -23,12 +25,9 @@ class MapWindow(object):
         pygame.display.flip()
 
     def update_map(self):
-        self.map = Map(self.coordinates, self.spn)
+        self.map = Map(self.coordinates, self.spn, self.pts, self.type_layer)
         self.get_map()
         print('ok')
-
-    def get_point(self, lon, lat):
-        pass
 
     def update(self):
         for event in pygame.event.get():
@@ -72,12 +71,29 @@ class MapWindow(object):
             if event.type == pygame.MOUSEMOTION:
                 pass
             if event.type == pygame.MOUSEBUTTONDOWN:
+                # lon, lat = self.pixels_in_lon_lat(event.pos[0], event.pos[1])
+                # self.append_pt(lon, lat)
+                # self.update_map()
                 pass
+            self.l_btn.update(event)
 
     def draw(self):
         self.screen.blit(pygame.image.load(os.path.join('map_parts/', self.map.name)), (0, 0))
+        self.l_btn.draw(self.screen)
         pygame.display.flip()
         self.update()
+
+    def append_pt(self, lon, lat):
+        self.pts.append('{},{},round'.format(lon, lat))
+
+    def pixels_in_lon_lat(self, x, y):
+        left_corner = [str(float(self.coordinates[0]) - float(self.spn[0]) / 2),
+                       str(float(self.coordinates[1]) + float(self.spn[1]) / 2)]
+        lon_px, lat_px = float(self.spn[0]) / self.w, float(self.spn[1]) / self.h
+        print(lat_px)
+        lon = float(left_corner[0]) + lon_px * float(x)
+        lat = float(left_corner[1]) + lat_px * float(y)
+        return lon, lat
 
     def get_map(self):
         try:
