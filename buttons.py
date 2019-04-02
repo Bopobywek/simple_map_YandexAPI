@@ -113,5 +113,4 @@ class ResetButton(pygame.sprite.Sprite):
     def update(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.rect.collidepoint(event.pos[0], event.pos[1]):
-                self.main_class.pts.clear()
-                self.main_class.update_map()
+                self.main_class.reset_search()
