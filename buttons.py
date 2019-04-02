@@ -68,3 +68,50 @@ class LayersButton(pygame.sprite.Sprite):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.rect.collidepoint(event.pos[0], event.pos[1]):
                 self.open = True if self.open is False else False
+
+
+class SearchButton(pygame.sprite.Sprite):
+    image = pygame.transform.flip(pygame.transform.scale(pygame.image.load(os.path.join('images/', 'search.png')),
+                                                         (35, 33)), True, False)
+
+    def __init__(self, group, x, y, main_class, i_field_class):
+        super().__init__(group)
+        self.i_field_class = i_field_class
+        self.main_class = main_class
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = x, y
+
+    def draw(self, screen):
+        screen.blit(self.image, (self.rect.x, self.rect.y))
+
+    def update(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.rect.collidepoint(event.pos[0], event.pos[1]):
+                text = self.i_field_class.text
+                if text != '':
+                    self.main_class.search_object(text)
+
+
+class ResetButton(pygame.sprite.Sprite):
+
+    def __init__(self, group, x, y, text, color, main_class):
+        super().__init__(group)
+        self.main_class = main_class
+        pygame.font.init()
+        self.text = text
+        self.font_button = pygame.font.Font('Oswald-Regular.ttf', 15)
+        self.text_button = self.font_button.render(text, 1, pygame.Color('black'))
+        self.image = pygame.Surface((80, 15), pygame.SRCALPHA, 32)
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = x, y
+
+    def draw(self, screen):
+        screen.blit(self.image, (self.rect.x, self.rect.y))
+        screen.blit(self.text_button, (self.rect.x + self.rect.width // 2 - self.text_button.get_width() // 2,
+                                       self.rect.y - 5))
+
+    def update(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.rect.collidepoint(event.pos[0], event.pos[1]):
+                self.main_class.pts.clear()
+                self.main_class.update_map()

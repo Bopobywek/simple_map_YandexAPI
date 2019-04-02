@@ -4,7 +4,6 @@ import requests
 
 from config import YANDEX_API_KEY
 
-URL_GEOCODE = "http://geocode-maps.yandex.ru/1.x/"
 URL_MAP = "http://static-maps.yandex.ru/1.x/"
 URL_SEARCH_MAP = "https://search-maps.yandex.ru/v1/"
 
