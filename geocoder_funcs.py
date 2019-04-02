@@ -34,11 +34,16 @@ def get_object_info(response):
         toponym_spn = [str(abs(float(toponym['boundedBy']['Envelope']['lowerCorner'].split()[x])
                            - float(toponym['boundedBy']['Envelope']['upperCorner'].split()[x]))) for x in range(2)]
         toponym_address = toponym['metaDataProperty']['GeocoderMetaData']['AddressDetails']['Country']['AddressLine']
-        return {'address': toponym_address, 'coordinates': toponym_coodrinates, 'spn': toponym_spn}
+        toponym_postal_code = toponym['metaDataProperty']['GeocoderMetaData']['Address'].get('postal_code',
+                                                                                             'Отсутствует')
+        return {'postal_code': toponym_postal_code,
+                'address': toponym_address,
+                'coordinates': toponym_coodrinates,
+                'spn': toponym_spn}
     except Exception as e:
         print(e)
         return None
 
 
 if __name__ == '__main__':
-    print(get_object_info(get_response('метро марьино')))
+    print(get_object_info(get_response('метро Марьино')))
