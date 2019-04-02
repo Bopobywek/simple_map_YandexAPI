@@ -7,6 +7,7 @@ from get_map import Map
 from buttons import LayersButton, SearchButton, ResetButton
 from input_field import InputField
 from geocoder_funcs import get_response, get_object_info
+from info_field import InfoField
 
 
 class MapWindow(object):
@@ -23,6 +24,7 @@ class MapWindow(object):
         self.search = InputField(self)
         self.btn_search = SearchButton(self.buttons, self.search.outer_rect.x + 10 + self.search.outer_rect.width,
                                        self.search.outer_rect.y, self, self.search)
+        self.info = InfoField('')
         self.map = Map(self.coordinates, self.spn, self.pts, self.type_layer)
         self.get_map()
         self.w, self.h = width, height
@@ -90,21 +92,28 @@ class MapWindow(object):
         self.search.draw(self.screen)
         self.btn_search.draw(self.screen)
         self.reset_btn.draw(self.screen)
+        self.info.draw(self.screen)
         pygame.display.flip()
         self.update()
 
     def append_pt(self, lon, lat):
         self.pts.append('{},{},round'.format(lon, lat))
 
+    def reset_search(self):
+        self.pts.clear()
+        self.info.change_address('')
+        self.update_map()
+
     def search_object(self, text):
         self.pts.clear()
         self.search.text = ''
         data = get_object_info(get_response(text))
         if data is not None:
-            coords = data['coordinates'][0], data['coordinates'][1]
+            coords = data.get('coordinates')[0], data.get('coordinates')[1]
             self.append_pt(coords[0], coords[1])
             self.coordinates = coords
-            self.spn = data['spn']
+            self.spn = data.get('spn')
+            self.info.change_address(data.get('address'))
             self.update_map()
 
     def nearest_spn(self):
