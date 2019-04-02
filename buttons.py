@@ -67,5 +67,4 @@ class LayersButton(pygame.sprite.Sprite):
                 btn.update(event)
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.rect.collidepoint(event.pos[0], event.pos[1]):
-                print(self.open)
                 self.open = True if self.open is False else False

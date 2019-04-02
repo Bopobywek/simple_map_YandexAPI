@@ -27,7 +27,6 @@ class MapWindow(object):
     def update_map(self):
         self.map = Map(self.coordinates, self.spn, self.pts, self.type_layer)
         self.get_map()
-        print('ok')
 
     def update(self):
         for event in pygame.event.get():
@@ -48,32 +47,25 @@ class MapWindow(object):
                     if float(self.coordinates[1]) - float(self.spn[1]) < -82:
                         self.coordinates = [self.coordinates[0], str(-82 + float(self.spn[1]))]
                     self.coordinates = self.coordinates[0], str(float(self.coordinates[1]) - float(self.spn[1]))
-                    print(self.coordinates)
                     self.update_map()
                 if event.key == pygame.K_UP:
                     if float(self.coordinates[1]) + float(self.spn[1]) > 85:
                         self.coordinates = [self.coordinates[0], str(85 - float(self.spn[1]))]
                     self.coordinates = self.coordinates[0], str(float(self.coordinates[1]) + float(self.spn[1]))
-                    print(self.coordinates)
                     self.update_map()
                 if event.key == pygame.K_LEFT:
                     if float(self.coordinates[0]) - float(self.spn[1]) < -172:
                         self.coordinates = [str(-172 + float(self.spn[1])), self.coordinates[1]]
                     self.coordinates = str(float(self.coordinates[0]) - float(self.spn[0])), self.coordinates[1]
-                    print(self.coordinates)
                     self.update_map()
                 if event.key == pygame.K_RIGHT:
                     if float(self.coordinates[0]) + float(self.spn[1]) > 178:
                         self.coordinates = [str(178 - float(self.spn[1])), self.coordinates[1]]
                     self.coordinates = str(float(self.coordinates[0]) + float(self.spn[0])), self.coordinates[1]
-                    print(self.coordinates)
                     self.update_map()
             if event.type == pygame.MOUSEMOTION:
                 pass
             if event.type == pygame.MOUSEBUTTONDOWN:
-                # lon, lat = self.pixels_in_lon_lat(event.pos[0], event.pos[1])
-                # self.append_pt(lon, lat)
-                # self.update_map()
                 pass
             self.l_btn.update(event)
 
@@ -90,7 +82,6 @@ class MapWindow(object):
         left_corner = [str(float(self.coordinates[0]) - float(self.spn[0]) / 2),
                        str(float(self.coordinates[1]) + float(self.spn[1]) / 2)]
         lon_px, lat_px = float(self.spn[0]) / self.w, float(self.spn[1]) / self.h
-        print(lat_px)
         lon = float(left_corner[0]) + lon_px * float(x)
         lat = float(left_corner[1]) + lat_px * float(y)
         return lon, lat
