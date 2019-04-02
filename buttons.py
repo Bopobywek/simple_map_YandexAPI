@@ -114,3 +114,25 @@ class ResetButton(pygame.sprite.Sprite):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.rect.collidepoint(event.pos[0], event.pos[1]):
                 self.main_class.reset_search()
+
+
+class CheckButton(pygame.sprite.Sprite):
+    image = pygame.transform.scale(pygame.image.load(os.path.join('images/', 'postal_code.png')), (40, 40))
+
+    def __init__(self, group, main_class):
+        super().__init__(group)
+        self.main_class = main_class
+        self.rect = self.image.get_rect()
+        self.state = False
+        self.rect.x, self.rect.y = 490, 5
+
+    def draw(self, screen):
+        if self.state:
+            pygame.draw.rect(screen, pygame.Color('white'), self.rect)
+        screen.blit(self.image, (self.rect.x, self.rect.y))
+
+    def update(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.rect.collidepoint(event.pos[0], event.pos[1]):
+                self.state = True if self.state is False else False
+                self.main_class.update_search()

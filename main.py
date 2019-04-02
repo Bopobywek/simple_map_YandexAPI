@@ -4,7 +4,7 @@ import sys
 import pygame
 
 from get_map import Map
-from buttons import LayersButton, SearchButton, ResetButton
+from buttons import LayersButton, SearchButton, ResetButton, CheckButton
 from input_field import InputField
 from geocoder_funcs import get_response, get_object_info
 from info_field import InfoField
@@ -24,7 +24,9 @@ class MapWindow(object):
         self.search = InputField(self)
         self.btn_search = SearchButton(self.buttons, self.search.outer_rect.x + 10 + self.search.outer_rect.width,
                                        self.search.outer_rect.y, self, self.search)
+        self.postal_code_btn = CheckButton(self.buttons, self)
         self.info = InfoField('')
+        self.last_search = ''
         self.map = Map(self.coordinates, self.spn, self.pts, self.type_layer)
         self.get_map()
         self.w, self.h = width, height
@@ -85,6 +87,7 @@ class MapWindow(object):
             self.search.update(event)
             self.btn_search.update(event)
             self.reset_btn.update(event)
+            self.postal_code_btn.update(event)
 
     def draw(self):
         self.screen.blit(pygame.image.load(os.path.join('map_parts/', self.map.name)), (0, 0))
@@ -93,6 +96,7 @@ class MapWindow(object):
         self.btn_search.draw(self.screen)
         self.reset_btn.draw(self.screen)
         self.info.draw(self.screen)
+        self.postal_code_btn.draw(self.screen)
         pygame.display.flip()
         self.update()
 
@@ -104,17 +108,25 @@ class MapWindow(object):
         self.info.change_address('')
         self.update_map()
 
+    def update_search(self):
+        self.search_object(self.last_search)
+
     def search_object(self, text):
-        self.pts.clear()
-        self.search.text = ''
-        data = get_object_info(get_response(text))
-        if data is not None:
-            coords = data.get('coordinates')[0], data.get('coordinates')[1]
-            self.append_pt(coords[0], coords[1])
-            self.coordinates = coords
-            self.spn = data.get('spn')
-            self.info.change_address(data.get('address'))
-            self.update_map()
+        if text != '':
+            self.pts.clear()
+            self.search.text = ''
+            self.last_search = text
+            data = get_object_info(get_response(text))
+            if data is not None:
+                coords = data.get('coordinates')[0], data.get('coordinates')[1]
+                self.append_pt(coords[0], coords[1])
+                self.coordinates = coords
+                self.spn = data.get('spn')
+                if self.postal_code_btn.state:
+                    self.info.change_address('{}. Индекс: {}'.format(data.get('address'), data.get('postal_code')))
+                else:
+                    self.info.change_address(data.get('address'))
+                self.update_map()
 
     def nearest_spn(self):
         list_index = 0
