@@ -20,7 +20,7 @@ class MapWindow(object):
         self.type_layer = 'map'
         self.buttons = pygame.sprite.Group()
         self.l_btn = LayersButton(self.buttons, self)
-        self.reset_btn = ResetButton(self.buttons, 51, 49, 'Сброс поискового результата', pygame.Color('white'), self)
+        self.reset_btn = ResetButton(self.buttons, 10, 49, 'Сброс поискового результата', pygame.Color('white'), self)
         self.search = InputField(self)
         self.btn_search = SearchButton(self.buttons, self.search.outer_rect.x + 10 + self.search.outer_rect.width,
                                        self.search.outer_rect.y, self, self.search)
@@ -105,6 +105,7 @@ class MapWindow(object):
 
     def reset_search(self):
         self.pts.clear()
+        self.last_search = ''
         self.info.change_address('')
         self.update_map()
 
@@ -137,13 +138,14 @@ class MapWindow(object):
                 list_index = self.SCALE_POSITIONS.index(el)
         return list_index
 
-    def pixels_in_lon_lat(self, x, y):
-        left_corner = [str(float(self.coordinates[0]) - float(self.spn[0]) / 2),
-                       str(float(self.coordinates[1]) + float(self.spn[1]) / 2)]
-        lon_px, lat_px = float(self.spn[0]) / self.w, float(self.spn[1]) / self.h
-        lon = float(left_corner[0]) + lon_px * float(x)
-        lat = float(left_corner[1]) + lat_px * float(y)
-        return lon, lat
+    # def pixels_in_lon_lat(self):
+    #     left_corner = [str(float(self.coordinates[0]) + float(self.spn[0]) / 2),
+    #                    str(float(self.coordinates[1]) - float(self.spn[1]))]
+    #     print(left_corner)
+    #     print(float(self.spn[0]) / 2)
+    #     self.append_pt(str(float(self.coordinates[0]) + 0.0125), self.coordinates[1])
+    #     print(str(float(self.coordinates[0]) + 0.0125))
+    #     self.update_map()
 
     def get_map(self):
         try:

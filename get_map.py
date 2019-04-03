@@ -2,7 +2,6 @@ import os
 
 import requests
 
-from config import YANDEX_API_KEY
 
 URL_MAP = "http://static-maps.yandex.ru/1.x/"
 URL_SEARCH_MAP = "https://search-maps.yandex.ru/v1/"
@@ -34,7 +33,8 @@ class Map(object):
             'll': ','.join(self.coordinates),
             'spn': ','.join(self.spn),
             'pt': '~'.join(self.pt),
-            'l': self.layer
+            'l': self.layer,
+            'size': '600,450'
         }
         response = requests.get(URL_MAP, map_params)
         self.error_handler(response)

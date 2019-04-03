@@ -31,8 +31,11 @@ def get_object_info(response):
         data = response.json()
         toponym = data["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
         toponym_coodrinates = toponym["Point"]["pos"].split()
+        print(toponym_coodrinates)
+        print(toponym['boundedBy']['Envelope']['lowerCorner'])
         toponym_spn = [str(abs(float(toponym['boundedBy']['Envelope']['lowerCorner'].split()[x])
                            - float(toponym['boundedBy']['Envelope']['upperCorner'].split()[x]))) for x in range(2)]
+        print(toponym_spn)
         toponym_address = toponym['metaDataProperty']['GeocoderMetaData']['AddressDetails']['Country']['AddressLine']
         toponym_postal_code = toponym['metaDataProperty']['GeocoderMetaData']['Address'].get('postal_code',
                                                                                              'Отсутствует')
