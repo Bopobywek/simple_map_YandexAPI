@@ -101,12 +101,10 @@ class ResetButton(pygame.sprite.Sprite):
         self.text = text
         self.font_button = pygame.font.Font('Oswald-Regular.ttf', 15)
         self.text_button = self.font_button.render(text, 1, pygame.Color('black'))
-        self.image = pygame.Surface((80, 15), pygame.SRCALPHA, 32)
-        self.rect = self.image.get_rect()
+        self.rect = self.text_button.get_rect()
         self.rect.x, self.rect.y = x, y
 
     def draw(self, screen):
-        screen.blit(self.image, (self.rect.x, self.rect.y))
         screen.blit(self.text_button, (self.rect.x + self.rect.width // 2 - self.text_button.get_width() // 2,
                                        self.rect.y - 5))
 
