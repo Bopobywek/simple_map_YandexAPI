@@ -1,6 +1,5 @@
 import pygame
 
-from buttons import Button
 
 TEXT_COLOR_INACTIVE = '#bfbfbf'
 TEXT_COLOR_ACTIVE = 'black'
