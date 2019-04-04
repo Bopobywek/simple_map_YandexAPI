@@ -2,9 +2,16 @@ import os
 
 import requests
 
+from config import YANDEX_API_KEY
 
 URL_MAP = "http://static-maps.yandex.ru/1.x/"
 URL_SEARCH_MAP = "https://search-maps.yandex.ru/v1/"
+SEARCH_ORGANIZATION_SPN = '0.00065,0.00065'
+
+
+# spn=0.00065,0.00065 ширина квадрата = 100 метрам -->
+# --> вписанная окружность с радиусом ширина / 2 --> Окружность(self.coordinates, r=50м).
+# Найдено путем подбора через distance.py
 
 
 class WritingFileException(BaseException):
@@ -27,6 +34,19 @@ class Map(object):
         self.pt = pt
         self.layer = layer
         self.name = 'main_map.png'
+
+    def search_organization(self):
+        search_params = {
+            "apikey": YANDEX_API_KEY,
+            "lang": "ru_RU",
+            "ll": ','.join(self.coordinates),
+            "type": "biz",
+            "rspn": "1",
+            "spn": SEARCH_ORGANIZATION_SPN}
+        response = requests.get(URL_SEARCH_MAP, search_params)
+        self.error_handler(response)
+        self.get_map()
+        return response.json()
 
     def get_map(self):
         map_params = {
@@ -56,3 +76,7 @@ class Map(object):
             raise ResponseContent('Response content is empty')
         elif response.status_code != 200:
             raise ResponseCode('Response status code is {}'.format(response.status_code))
+
+
+if __name__ == '__main__':
+    print(Map(['37.588392', '55.734036'], 12, pt='', layer='map').search_organization())
