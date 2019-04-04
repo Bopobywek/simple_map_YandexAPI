@@ -1,4 +1,5 @@
 import os
+import math
 import sys
 
 import pygame
@@ -11,10 +12,10 @@ from info_field import InfoField
 
 
 class MapWindow(object):
-    SCALE_POSITIONS = ['0.0001', '0.001', '0.005', '0.01', '0.02', '0.03', '0.05', '0.1', '0.5', '1', '3', '6']
+    LON_STEP, LAT_STEP = 0.02, 0.008
 
     def __init__(self, width, height):
-        self.spn = ['0.01', '0.01']  # Долгота, широта
+        self.z = 15
         self.coordinates = ['37.620070', '55.753630']  # Долгота (lon), Широта (lat)
         self.pts = list()
         self.type_layer = 'map'
@@ -27,7 +28,7 @@ class MapWindow(object):
         self.postal_code_btn = CheckButton(self.buttons, self)
         self.info = InfoField('')
         self.last_search = ''
-        self.map = Map(self.coordinates, self.spn, self.pts, self.type_layer)
+        self.map = Map(self.coordinates, self.z, self.pts, self.type_layer)
         self.get_map()
         self.w, self.h = width, height
         pygame.init()
@@ -35,7 +36,7 @@ class MapWindow(object):
         pygame.display.flip()
 
     def update_map(self):
-        self.map = Map(self.coordinates, self.spn, self.pts, self.type_layer)
+        self.map = Map(self.coordinates, self.z, self.pts, self.type_layer)
         self.get_map()
 
     def update(self):
@@ -45,39 +46,30 @@ class MapWindow(object):
                 sys.exit(0)
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_PAGEUP:
-                    if self.spn[0] not in self.SCALE_POSITIONS:
-                        s_index = self.nearest_spn()
-                        self.spn = [self.SCALE_POSITIONS[s_index] for _ in range(2)]
-                    self.spn = [self.SCALE_POSITIONS[self.SCALE_POSITIONS.index(self.spn[i]) - 1]
-                                for i in range(2)] if self.SCALE_POSITIONS.index(self.spn[0]) - 1 >= 0 else self.spn
+                    self.z = self.z + 1 if self.z < 19 else 19
                     self.update_map()
                 if event.key == pygame.K_PAGEDOWN:
-                    if self.spn[0] not in self.SCALE_POSITIONS:
-                        s_index = self.nearest_spn()
-                        self.spn = [self.SCALE_POSITIONS[s_index] for _ in range(2)]
-                    self.spn = [self.SCALE_POSITIONS[self.SCALE_POSITIONS.index(self.spn[i]) + 1]
-                                for i in range(2)] if self.SCALE_POSITIONS.index(self.spn[0]) + 1 < \
-                                                      len(self.SCALE_POSITIONS) else self.spn
+                    self.z = self.z - 1 if self.z > 2 else 2
                     self.update_map()
                 if event.key == pygame.K_DOWN:
-                    if float(self.coordinates[1]) - float(self.spn[1]) < -82:
-                        self.coordinates = [self.coordinates[0], str(-82 + float(self.spn[1]))]
-                    self.coordinates = self.coordinates[0], str(float(self.coordinates[1]) - float(self.spn[1]))
+                    lat = self.LAT_STEP * math.pow(2, 15 - self.z)
+                    lat = 70 + float(self.coordinates[1]) if float(self.coordinates[1]) - lat < -70 else lat
+                    self.coordinates = self.coordinates[0], str(float(self.coordinates[1]) - lat)
                     self.update_map()
                 if event.key == pygame.K_UP:
-                    if float(self.coordinates[1]) + float(self.spn[1]) > 85:
-                        self.coordinates = [self.coordinates[0], str(85 - float(self.spn[1]))]
-                    self.coordinates = self.coordinates[0], str(float(self.coordinates[1]) + float(self.spn[1]))
+                    lat = self.LAT_STEP * math.pow(2, 15 - self.z)
+                    lat = 70 - float(self.coordinates[1]) if float(self.coordinates[1]) + lat > 70 else lat
+                    self.coordinates = self.coordinates[0], str(float(self.coordinates[1]) + lat)
                     self.update_map()
                 if event.key == pygame.K_LEFT:
-                    if float(self.coordinates[0]) - float(self.spn[1]) < -172:
-                        self.coordinates = [str(-172 + float(self.spn[1])), self.coordinates[1]]
-                    self.coordinates = str(float(self.coordinates[0]) - float(self.spn[0])), self.coordinates[1]
+                    lon = self.LON_STEP * math.pow(2, 15 - self.z)
+                    lon = 160 + float(self.coordinates[0]) if float(self.coordinates[0]) - lon < -160 else lon
+                    self.coordinates = str(float(self.coordinates[0]) - lon), self.coordinates[1]
                     self.update_map()
                 if event.key == pygame.K_RIGHT:
-                    if float(self.coordinates[0]) + float(self.spn[1]) > 178:
-                        self.coordinates = [str(178 - float(self.spn[1])), self.coordinates[1]]
-                    self.coordinates = str(float(self.coordinates[0]) + float(self.spn[0])), self.coordinates[1]
+                    lon = self.LON_STEP * math.pow(2, 15 - self.z)
+                    lon = 160 - float(self.coordinates[0]) if float(self.coordinates[0]) + lon > 160 else lon
+                    self.coordinates = str(float(self.coordinates[0]) + lon), self.coordinates[1]
                     self.update_map()
             if event.type == pygame.MOUSEMOTION:
                 pass
@@ -122,21 +114,11 @@ class MapWindow(object):
                 coords = data.get('coordinates')[0], data.get('coordinates')[1]
                 self.append_pt(coords[0], coords[1])
                 self.coordinates = coords
-                self.spn = data.get('spn')
                 if self.postal_code_btn.state:
                     self.info.change_address('{}. Индекс: {}'.format(data.get('address'), data.get('postal_code')))
                 else:
                     self.info.change_address(data.get('address'))
                 self.update_map()
-
-    def nearest_spn(self):
-        list_index = 0
-        best_res = 100
-        for el in self.SCALE_POSITIONS:
-            if float(el) - float(self.spn[0]) < best_res:
-                best_res = abs(float(el) - float(self.spn[0]))
-                list_index = self.SCALE_POSITIONS.index(el)
-        return list_index
 
     # def pixels_in_lon_lat(self):
     #     left_corner = [str(float(self.coordinates[0]) + float(self.spn[0]) / 2),
