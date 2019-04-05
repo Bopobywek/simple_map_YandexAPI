@@ -1,6 +1,7 @@
 import os
 import math
 import sys
+import time
 
 import pygame
 
@@ -19,6 +20,7 @@ class MapWindow(object):
         self.coordinates = ['37.620070', '55.753630']  # Долгота (lon), Широта (lat)
         self.pts = list()
         self.type_layer = 'map'
+        self.org = ''
         self.buttons = pygame.sprite.Group()
         self.l_btn = LayersButton(self.buttons, self)
         self.reset_btn = ResetButton(self.buttons, 10, 49, 'Сброс поискового результата', pygame.Color('white'), self)
@@ -81,22 +83,22 @@ class MapWindow(object):
                               self.btn_search.rect.collidepoint(event.pos[0], event.pos[1])]
                 btns_array.extend([x.rect.collidepoint(event.pos[0], event.pos[1]) for x in self.l_btn.layers_buttons])
                 if not any(btns_array):
+                    step_lon, step_lat, upper_corner_left = self.get_step()
+                    coordinates = [str(float(upper_corner_left[0]) + step_lon * event.pos[0]),
+                                   str(float(upper_corner_left[1]) - step_lat * event.pos[1])]
                     if event.button == 1:
                         self.reset_search()
-                        lon = self.LON_STEP * math.pow(2, 15 - self.z) / 1.55
-                        lat = self.LAT_STEP * math.pow(2, 15 - self.z) / 1.47
-                        upper_corner_right = str(float(self.coordinates[0]) + lon), str(float(self.coordinates[1]) + lat)
-                        lower_corner_left = str(float(self.coordinates[0]) - lon), str(float(self.coordinates[1]) - lat)
-                        upper_corner_left = str(float(self.coordinates[0]) - lon), str(float(self.coordinates[1]) + lat)
-                        step_lon = abs(float(lower_corner_left[0]) - float(upper_corner_right[0])) / self.w
-                        step_lat = abs(float(lower_corner_left[1]) - float(upper_corner_right[1])) / self.h
-                        coordiates = [str(float(upper_corner_left[0]) + step_lon * event.pos[0]),
-                                      str(float(upper_corner_left[1]) - step_lat * event.pos[1])]
-                        self.append_pt(coordiates[0], coordiates[1])
-                        self.search_object(','.join(x for x in coordiates), type_of_request='click')
-                    elif event.button == 2:
+                        self.append_pt(coordinates[0], coordinates[1])
+                        self.search_object(','.join(x for x in coordinates), type_of_request='click')
+                    elif event.button == 3:
+                        self.reset_search()
+                        data = self.map.search_org(coordinates)
+                        if data is not None:
+                            self.org = data.get('name', '')
+                            org_coordinates = data.get('coordinates')
+                            self.append_pt(org_coordinates[0], org_coordinates[1])
+                            self.search_object(','.join(data.get('coordinates')), type_of_request='click', org=True)
 
-                        pass
             self.l_btn.update(event)
             self.search.update(event)
             self.btn_search.update(event)
@@ -114,11 +116,22 @@ class MapWindow(object):
         pygame.display.flip()
         self.update()
 
+    def get_step(self):
+        lon = self.LON_STEP * math.pow(2, 15 - self.z) / 1.55
+        lat = self.LAT_STEP * math.pow(2, 15 - self.z) / 1.47
+        upper_corner_right = str(float(self.coordinates[0]) + lon), str(float(self.coordinates[1]) + lat)
+        lower_corner_left = str(float(self.coordinates[0]) - lon), str(float(self.coordinates[1]) - lat)
+        upper_corner_left = str(float(self.coordinates[0]) - lon), str(float(self.coordinates[1]) + lat)
+        step_lon = abs(float(lower_corner_left[0]) - float(upper_corner_right[0])) / self.w
+        step_lat = abs(float(lower_corner_left[1]) - float(upper_corner_right[1])) / self.h
+        return step_lon, step_lat, upper_corner_left
+
     def append_pt(self, lon, lat):
         self.pts.append('{},{},round'.format(lon, lat))
 
     def reset_search(self):
         self.pts.clear()
+        self.org = ''
         self.last_search = ''
         self.info.change_address('')
         self.update_map()
@@ -126,29 +139,47 @@ class MapWindow(object):
     def update_search(self):
         self.search_object(self.last_search)
 
-    def search_object(self, text, type_of_request=None):
+    def search_object(self, text, type_of_request=None, org=False):
         if text != '':
+            self.last_search = text
             if type_of_request is None:
                 self.pts.clear()
                 self.search.text = ''
-                self.last_search = text
                 data = get_object_info(get_response(text))
                 if data is not None:
                     coords = data.get('coordinates')[0], data.get('coordinates')[1]
                     self.append_pt(coords[0], coords[1])
                     self.coordinates = coords
                     if self.postal_code_btn.state:
-                        self.info.change_address('{}. Индекс: {}'.format(data.get('address'), data.get('postal_code')))
+                        if org:
+                            self.info.change_address('{}, {}. Индекс: {}'.format(data.get('address'),
+                                                                                 self.org,
+                                                                                 data.get('postal_code')))
+                        else:
+                            self.info.change_address('{}. Индекс: {}'.format(data.get('address'),
+                                                                             data.get('postal_code')))
                     else:
-                        self.info.change_address(data.get('address'))
+                        if org:
+                            self.info.change_address('{}, {}'.format(data.get('address'), self.org))
+                        else:
+                            self.info.change_address(data.get('address'))
             else:
                 data = get_object_info(get_response(text))
                 if data is not None:
                     self.coordinates = text.split(',')
                     if self.postal_code_btn.state:
-                        self.info.change_address('{}. Индекс: {}'.format(data.get('address'), data.get('postal_code')))
+                        if org:
+                            self.info.change_address('{}, {}. Индекс: {}'.format(data.get('address'),
+                                                                                 self.org,
+                                                                                 data.get('postal_code')))
+                        else:
+                            self.info.change_address('{}. Индекс: {}'.format(data.get('address'),
+                                                                             data.get('postal_code')))
                     else:
-                        self.info.change_address(data.get('address'))
+                        if org:
+                            self.info.change_address('{}, {}'.format(data.get('address'), self.org))
+                        else:
+                            self.info.change_address(data.get('address'))
             self.update_map()
 
     # def pixels_in_lon_lat(self):

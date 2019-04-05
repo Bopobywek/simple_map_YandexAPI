@@ -3,15 +3,12 @@ import os
 import requests
 
 from config import YANDEX_API_KEY
+from distance import dist
 
 URL_MAP = "http://static-maps.yandex.ru/1.x/"
 URL_SEARCH_MAP = "https://search-maps.yandex.ru/v1/"
-SEARCH_ORGANIZATION_SPN = '0.00065,0.00065'
 
-
-# spn=0.00065,0.00065 ширина квадрата = 100 метрам -->
-# --> вписанная окружность с радиусом ширина / 2 --> Окружность(self.coordinates, r=50м).
-# Найдено путем подбора через distance.py
+SEARCH_ORGANIZATION_SPN = '0.001,0.001'
 
 
 class WritingFileException(BaseException):
@@ -26,6 +23,10 @@ class ResponseContent(BaseException):
     pass
 
 
+class BadContent(BaseException):
+    pass
+
+
 class Map(object):
 
     def __init__(self, coordinates, z, pt, layer):
@@ -35,18 +36,33 @@ class Map(object):
         self.layer = layer
         self.name = 'main_map.png'
 
-    def search_organization(self):
-        search_params = {
-            "apikey": YANDEX_API_KEY,
-            "lang": "ru_RU",
-            "ll": ','.join(self.coordinates),
-            "type": "biz",
-            "rspn": "1",
-            "spn": SEARCH_ORGANIZATION_SPN}
-        response = requests.get(URL_SEARCH_MAP, search_params)
+    def search_org(self, coordinates):
+        params = {
+            'apikey': YANDEX_API_KEY,
+            'll': ','.join(coordinates),
+            'lang': 'ru_RU',
+            'type': 'biz',
+            'spn': SEARCH_ORGANIZATION_SPN,
+            'rspn': 1,
+            'results': '10'
+        }
+        response = requests.get(URL_SEARCH_MAP, params)
         self.error_handler(response)
-        self.get_map()
-        return response.json()
+        response = response.json()
+        if bool(response.get('features')):
+            index_obj = None
+            for el in response['features']:
+                if dist(el['geometry']['coordinates'], [float(x) for x in coordinates]) <= 50:
+                    index_obj = response['features'].index(el)
+                    break
+            if index_obj is not None:
+                org_object = response['features'][index_obj]
+                org_coordinates = [str(x) for x in org_object['geometry']['coordinates']]
+                org_name = org_object['properties']['name']
+                org_address = org_object['properties']['CompanyMetaData']['address']
+                return {'coordinates': org_coordinates, 'name': org_name, 'address': org_address}
+            return None
+        return None
 
     def get_map(self):
         map_params = {
@@ -79,4 +95,4 @@ class Map(object):
 
 
 if __name__ == '__main__':
-    print(Map(['37.588392', '55.734036'], 12, pt='', layer='map').search_organization())
+    pass
