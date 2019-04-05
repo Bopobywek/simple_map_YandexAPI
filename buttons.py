@@ -94,7 +94,7 @@ class SearchButton(pygame.sprite.Sprite):
 
 class ResetButton(pygame.sprite.Sprite):
 
-    def __init__(self, group, x, y, text, color, main_class):
+    def __init__(self, group, x, y, text, main_class):
         super().__init__(group)
         self.main_class = main_class
         pygame.font.init()

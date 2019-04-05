@@ -92,7 +92,3 @@ class Map(object):
             raise ResponseContent('Response content is empty')
         elif response.status_code != 200:
             raise ResponseCode('Response status code is {}'.format(response.status_code))
-
-
-if __name__ == '__main__':
-    pass
